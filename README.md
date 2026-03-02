@@ -75,6 +75,8 @@ The added [requirements file](requirements.txt) contains all libraries and depen
 
 - We use git lfs to store data and models
 
+### Setup
+
     For `Git-Bash` CLI :
     ```
     git lfs install
@@ -83,4 +85,15 @@ The added [requirements file](requirements.txt) contains all libraries and depen
     git lfs track "files/models/**"
     git lfs track "files/pipelines/**"
     git lfs track "files/data/lfs/**"
+    ```
+
+### Use
+
+    For `Git-Bash` CLI :
+    ```
+    git lfs install
+    git lfs version
+
+    git pull
+    git lfs pull  
     ```
