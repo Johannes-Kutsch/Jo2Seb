@@ -12,7 +12,6 @@ The added [requirements file](requirements.txt) contains all libraries and depen
 
 ### **`macOS`** type the following commands : 
 
-
 - Install the virtual environment and the required packages by following commands:
 
     ```BASH
@@ -70,4 +69,18 @@ The added [requirements file](requirements.txt) contains all libraries and depen
     ```
     source .venv/bin/activate
     pip freeze > requirements.txt
+    ```
+
+## GIT LFS
+
+- We use git lfs to store data and models
+
+    For `Git-Bash` CLI :
+    ```
+    git lfs install
+    git lfs version
+
+    git lfs track "files/models/**"
+    git lfs track "files/pipelines/**"
+    git lfs track "files/data/lfs/**"
     ```
