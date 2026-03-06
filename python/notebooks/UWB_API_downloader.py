@@ -69,8 +69,8 @@ BASE_URL      = "https://luftdaten.umweltbundesamt.de/api/air-data/v4/measures/j
 STATIONS      = ['784', '791', '802', '835', '840', '844', '846',
                  '855', '857', '10348', '826', '10466']
 #STATIONS      = ['784']
-COMPONENT     = 5
-SCOPE         = 2
+COMPONENT     = 6
+SCOPE         = 6
 DATE_FROM     = date(2018, 1, 1)
 DATE_TO       = date(2025, 12, 31)
 CHUNK_MONTHS  = 12
