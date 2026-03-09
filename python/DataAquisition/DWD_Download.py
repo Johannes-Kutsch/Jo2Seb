@@ -21,15 +21,21 @@ import os
 import time
 import logging
 from datetime import datetime, timedelta, timezone
-import python.Utils.FilePaths
+from os import path
 import requests
 import pandas as pd
 from tqdm import tqdm
 
 # ── Configuration ────────────────────────────────────────────────────────────
 
+#--------Directories ---------------------------------------
+## Project directory
+project_dir = path.dirname(path.dirname(path.abspath('')))
+## Location for data_tables
+data_tables_dir = path.join(project_dir, "files", "data", "lfs", "DWD", "data_tables")
+
 BASE_URL       = "https://api.brightsky.dev"
-OUTPUT_DIR     = "hamburg_weather_data"
+OUTPUT_DIR     = data_tables_dir
 
 # Hamburg city centre
 HAMBURG_LAT    = 53.5753
@@ -166,7 +172,7 @@ def fetch_station_data(dwd_station_id: str) -> pd.DataFrame:
           .dt.tz_convert("Europe/Berlin")
     )
     df = df.set_index("timestamp")
-    df.index = df.index.floor("h")          # ensure full-hour alignment
+    df.index = df.index.floor("h", ambiguous='infer', nonexistent='shift_forward')
     df.index.name = "datetime"
 
     # ── Drop metadata columns ──────────────────────────────────────────────
