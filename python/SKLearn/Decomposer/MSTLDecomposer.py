@@ -43,8 +43,7 @@ class MSTLDecomposer(BaseEstimator, RegressorMixin):
             Fitted MSTL decomposition object.
 
         decomp_ : DecomposeResult
-            Result of the MSTL decomposition containing trend, seasonal,
-            and residual components.
+            Result of the MSTL decomposition containing trend, seasonal, and residual components.
 
         trend_model_ : estimator
             Fitted clone of the provided trend model.
@@ -53,93 +52,55 @@ class MSTLDecomposer(BaseEstimator, RegressorMixin):
             Fitted clone of the residual model if provided.
 
         seasonal_patterns_ : dict
-            Dictionary containing the last observed seasonal pattern
-            for each seasonal period.
+            Dictionary containing the last observed seasonal pattern for each seasonal period.
 
         trend_index_ : int
-            Index position of the last observed trend value used to
-            generate future trend forecasts.
+            Index position of the last observed trend value used to generate future trend forecasts.
         """
-    def __init__(self, seasonal_periods=None, trend_model=None, resid_model=None):
+    def __init__(self, column_name, seasonal_periods=None, trend_model=None, overwrite_column_with_residuals = False):
         self.seasonal_periods = seasonal_periods
         self.trend_model = trend_model
-        self.resid_model = resid_model
+        self.column_name = column_name
+        self.overwrite_column_with_residuals = overwrite_column_with_residuals
 
         self.decomp_ = None
 
         self.trend_model_ = None
-        self.resid_model_ = None
 
         self.seasonal_patterns_ = None
         self.trend_index_ = None
 
 
-    def fit(self, X, y):
-        """
-        Fit the MSTLRegressor.
+    def fit(self, X, y=None):
+        series = X[self.column_name]
 
-        The method performs the following steps:
-
-        1. Decomposes the target series using MSTL.
-        2. Fits the provided trend model on the extracted trend component.
-        3. Stores the last seasonal patterns for each seasonal period.
-        4. Optionally fits the residual regression model using the
-           provided exogenous features.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Exogenous features used to model the residual component.
-
-        y : array-like of shape (n_samples,)
-            Target time series.
-
-        Returns
-        -------
-        self : MSTLDecomposer
-            Fitted estimator.
-        """
-        y = pd.Series(y)
-
-        self.decomp_ = MSTL(y, periods=self.seasonal_periods).fit()
+        self.decomp_ = MSTL(series, periods=self.seasonal_periods).fit()
 
         self.seasonal_patterns_ = self._create_seasonal_patterns(self.decomp_.seasonal, self.seasonal_periods)
-
         self.trend_model_, self.trend_index_ = self._create_fitted_trend_model(self.decomp_.trend, self.trend_model)
-        self.resid_model_ = self._create_fitted_resid_model(X, self.decomp_.resid, self.resid_model)
 
         return self
 
-    def predict(self, X):
-        """
-        Generate forecasts for the given exogenous features.
-
-        The prediction is computed as the sum of the forecasted trend,
-        seasonal, and residual components.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_steps, n_features)
-            Exogenous features for the forecast horizon.
-
-        Returns
-        -------
-        ndarray of shape (n_steps,)
-            Forecasted values of the target time series.
-        """
+    def transform(self, X):
+        X = X.copy()
         steps = len(X)
 
-        t_future = np.arange(self.trend_index_, self.trend_index_ + steps).reshape(-1, 1)
-        trend_forecast = self.trend_model_.predict(t_future)
+        trend_forecast_index = np.arange(self.trend_index_, self.trend_index_ + steps).reshape(-1, 1)
+        trend_feature = self.trend_model_.predict(trend_forecast_index)
+        X[f"{self.column_name}_trend"] = trend_feature
 
-        seasonal_forecast = self._forecast_seasonality(steps, self.seasonal_patterns_)
+        seasonal_features = self._forecast_seasonality(steps, self.seasonal_patterns_)
+        for col in seasonal_features.columns:
+            X[f"{self.column_name}_{col}"] = seasonal_features[col].values
 
-        if self.resid_model_ is not None:
-            resid_forecast = self.resid_model_.predict(X)
+        residuals = X[self.column_name] - trend_feature - seasonal_features.values.sum(axis=1)
+
+        if self.overwrite_column_with_residuals:
+            X[self.column_name] = residuals
         else:
-            resid_forecast = np.zeros(steps)
+            X[f"{self.column_name}_residuals"] = residuals
 
-        return trend_forecast + seasonal_forecast + resid_forecast
+        return X
 
     @staticmethod
     def _create_fitted_resid_model(X, y_resid, orig_resid_model: RegressorMixin):
@@ -182,14 +143,11 @@ class MSTLDecomposer(BaseEstimator, RegressorMixin):
 
     @staticmethod
     def _forecast_seasonality(steps, seasonal_patterns):
-        seasonal_forecast = np.zeros(steps)
+        seasonal_features = {}
 
         for p, pattern in seasonal_patterns.items():
-            repeated = np.tile(
-                pattern,
-                int(np.ceil(steps / p))
-            )[:steps]
+            seasonal_features[f"seasonal_{p}"] = (
+                np.tile(pattern, int(np.ceil(steps / p)))[:steps]
+            )
 
-            seasonal_forecast += repeated
-
-        return seasonal_forecast
+        return pd.DataFrame(seasonal_features)
