@@ -1,6 +1,7 @@
 ﻿import mlflow
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from matplotlib import pyplot as plt
 from mlflow.models import infer_signature
 from pandas import DataFrame, Series
@@ -60,8 +61,8 @@ def evaluate_timeseries_pipeline(X:DataFrame, y:Series, pipeline:Pipeline, exper
 
     return pd.DataFrame({"y_test": y_test, "y_pred": y_pred})
 
-def walk_forward_predict(X_train, y_train, X_test, y_test, pipeline):
 
+def walk_forward_predict(X_train, y_train, X_test, y_test, pipeline):
     y_pred = pd.Series(np.nan, index=y_test.index)
 
     X_all = pd.concat([X_train, X_test])
@@ -69,11 +70,14 @@ def walk_forward_predict(X_train, y_train, X_test, y_test, pipeline):
 
     train_size = len(X_train)
 
+    progress_bar = tqdm(total=len(X_test), desc="Walk-forward prediction", ncols=120)
+
     for i in range(len(X_test)):
         y_pred.iloc[i] = predict_at_position(X_all, y_all, pipeline, train_size + i)
+        progress_bar.update(1)
 
+    progress_bar.close()
     return y_pred
-
 
 def predict_at_position(X_all: DataFrame, y_all: DataFrame, pipeline, position: int) -> float:
     X_train_step = X_all.iloc[:position]
