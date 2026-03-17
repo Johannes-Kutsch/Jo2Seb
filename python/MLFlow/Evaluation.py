@@ -35,7 +35,7 @@ def evaluate_timeseries_pipeline(X:DataFrame, y:Series, pipeline:Pipeline, exper
     params["walk_forward"] = str(walk_forward)
 
     params["pipeline_structure"] = " -> ".join([type(transformer).__name__ for _, transformer in pipeline.steps])
-    for name, transformer in pipeline.steps: ## Save Hyperparameters
+    for name, transformer in pipeline.steps:
         transformer_params = transformer.get_params()
         for k, v in transformer_params.items():
             if v is not None:

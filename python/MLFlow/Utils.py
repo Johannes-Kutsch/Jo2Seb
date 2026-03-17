@@ -19,3 +19,4 @@ def log_metrics(y_test, y_pred):
     mlflow.log_metric(f"mae", mae)
     mlflow.log_metric(f"rmse", rmse)
     mlflow.log_metric(f"r2", r2)
+
