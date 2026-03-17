@@ -4,7 +4,7 @@ import pandas as pd
 from statsmodels.tsa.seasonal import MSTL, DecomposeResult
 
 
-class MSTLRegressor(BaseEstimator, RegressorMixin):
+class MSTLDecomposer(BaseEstimator, RegressorMixin):
     """
         Regression model based on MSTL decomposition.
 
@@ -96,7 +96,7 @@ class MSTLRegressor(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        self : MSTLRegressor
+        self : MSTLDecomposer
             Fitted estimator.
         """
         y = pd.Series(y)
