@@ -72,14 +72,13 @@ class PipelineFactory:
             "trend_model": LinearRegression(),
             "pm10_lags": [1, 7, 8, 14, 15, 21, 22, 28, 29],
             "pm10_rolling_windows": [2, 3, 4],
-            "decomposer": ProphetDecomposer("PM10", residual_options=ResidualOption.IGNORE)
         }
 
         params = PipelineFactory._aggregate_params(params, default_params)
 
         pipeline = Pipeline([
             ("log1p_transform_PM10", ColumnFunctionTransformer(["PM10"])),
-            ("mstl_decomposition", default_params["decomposer"]),
+            ("mstl_decomposition", ProphetDecomposer("PM10", residual_options=ResidualOption.IGNORE)),
             ("temporal_feature_builder", TemporalFeatureBuilder(["PM10"], lags=params["pm10_lags"], rolling_windows=params["pm10_rolling_windows"])),
             ("drop_PM_10", FeatureDropTransformer(["PM10"])),
         ])

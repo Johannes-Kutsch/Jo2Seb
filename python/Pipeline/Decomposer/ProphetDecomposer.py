@@ -1,5 +1,6 @@
 ﻿from sklearn.base import BaseEstimator, RegressorMixin
 import pandas as pd
+import logging
 from prophet import Prophet
 
 from Pipeline.Decomposer.ResidualOption import ResidualOption
@@ -19,6 +20,7 @@ class ProphetDecomposer(BaseEstimator, RegressorMixin):
         df = self._to_prophet_df(X)
 
         self.model_ = Prophet(**self.prophet_kwargs)
+        logging.getLogger("cmdstanpy").setLevel(logging.WARNING)
         self.model_.fit(df)
 
         # Determine which seasonality columns Prophet produced
