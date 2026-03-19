@@ -3,15 +3,11 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.seasonal import MSTL, DecomposeResult
 
-from enum import Enum
+from Pipeline.Decomposer.ResidualOption import ResidualOption
 
-class ResidualOptions(Enum):
-    IGNORE = "ignore"
-    OVERWRITE_ORIGINAL_FEATURE = "overwrite_original_feature"
-    NEW_FEATURE = "new_feature"
 
 class MSTLDecomposer(BaseEstimator, RegressorMixin):
-    def __init__(self, column_name, seasonal_periods=None, trend_model=None, residual_options:ResidualOptions = ResidualOptions.IGNORE):
+    def __init__(self, column_name, seasonal_periods=None, trend_model=None, residual_options:ResidualOption = ResidualOption.IGNORE):
         self.seasonal_periods = seasonal_periods
         self.trend_model = trend_model
         self.column_name = column_name
@@ -49,9 +45,9 @@ class MSTLDecomposer(BaseEstimator, RegressorMixin):
 
         residuals = X[self.column_name] - trend_feature - seasonal_features.values.sum(axis=1)
 
-        if self.residual_options == ResidualOptions.OVERWRITE_ORIGINAL_FEATURE:
+        if self.residual_options == ResidualOption.OVERWRITE_ORIGINAL_FEATURE:
             X[self.column_name] = residuals
-        elif self.residual_options == ResidualOptions.NEW_FEATURE:
+        elif self.residual_options == ResidualOption.NEW_FEATURE:
             X[f"{self.column_name}_residuals"] = residuals
 
         return X

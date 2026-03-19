@@ -12,6 +12,7 @@ class ColumnFunctionTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
+        X = X.copy()
         if self.new_column_suffix is None:
             X[self.columns] = X[self.columns].apply(self.function, axis=0)
             return X

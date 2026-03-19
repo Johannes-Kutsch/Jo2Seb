@@ -26,8 +26,6 @@ def evaluate_timeseries_pipeline(X:DataFrame, y:Series, pipeline:Pipeline, exper
     - results: list of dicts with split info and metrics
     """
 
-    X_test, X_train, y_test, y_train = create_train_test_split(X, y, train_test_split)
-
     if params is None:
         params = {}
 
@@ -45,58 +43,86 @@ def evaluate_timeseries_pipeline(X:DataFrame, y:Series, pipeline:Pipeline, exper
     start_local_experiment(experiment)
 
     with mlflow.start_run(run_name=f"{model_name}"):
-        if walk_forward:
-            y_pred = walk_forward_predict(X_train, y_train, X_test, y_test, pipeline)
-        else:
-            pipeline.fit(X_train, y_train)
-            y_pred = pipeline.predict(X_test)
-
-        pred_nan_mask = ~np.isnan(y_pred)
-        y_pred = y_pred[pred_nan_mask]
-        y_test = y_test[pred_nan_mask]
-
+        X_test_transformed, y_pred, y_test = (
+            _walk_forward_predict(X, y, pipeline, train_test_split)
+            if walk_forward
+            else _predict(X, y, pipeline, train_test_split)
+        )
         log_metrics(y_test, y_pred)
-        signature = infer_signature(X_test[pred_nan_mask], y_pred)
+        signature = infer_signature(X_test_transformed, y_pred)
         mlflow.sklearn.log_model(sk_model=pipeline, name=model_name, signature=signature, params=params)
 
     return pd.DataFrame({"y_test": y_test, "y_pred": y_pred})
 
 
-def walk_forward_predict(X_train, y_train, X_test, y_test, pipeline):
-    y_pred = pd.Series(np.nan, index=y_test.index)
+def _transform_all(pipeline: Pipeline, X: DataFrame) -> DataFrame:
+    X_transformed = X
+    for _, transformer in pipeline.steps:
+        if isinstance(transformer, Pipeline):
+            X_transformed = _transform_all(transformer, X_transformed)
+        else:
+            X_transformed = transformer.transform(X_transformed)
+    return X_transformed
 
-    X_all = pd.concat([X_train, X_test])
-    y_all = pd.concat([y_train, y_test])
 
-    train_size = len(X_train)
+def _transform_without_final(pipeline: Pipeline, X: DataFrame) -> DataFrame:
+    X_transformed = X
+    for _, transformer in pipeline.steps[:-1]:
+        if isinstance(transformer, Pipeline):
+            X_transformed = _transform_all(transformer, X_transformed)
+        else:
+            X_transformed = transformer.transform(X_transformed)
+    return X_transformed
 
-    progress_bar = tqdm(total=len(X_test), desc="Walk-forward prediction", ncols=120)
 
-    for i in range(len(X_test)):
-        y_pred.iloc[i] = predict_at_position(X_all, y_all, pipeline, train_size + i)
+def _predict(X: DataFrame, y: Series, pipeline: Pipeline, train_test_split: float):
+    split = int(len(X) * train_test_split)
+    X_train = X.iloc[:split]
+    y_train = y.iloc[:split]
+
+    pipeline.fit(X_train, y_train)
+
+    X_transformed = _transform_without_final(pipeline, X)
+    X_test_transformed = X_transformed.loc[X.index[split]:]
+
+    y_test = y.loc[X_test_transformed.index]
+
+    y_pred = pipeline[-1].predict(X_test_transformed)
+    return X_test_transformed, y_pred, y_test
+
+
+def _walk_forward_predict(X: DataFrame, y: Series, pipeline: Pipeline, train_test_split: float):
+    split = int(len(X) * train_test_split)
+
+    y_pred_list = []
+    y_test_list = []
+    X_test_transformed_last = None
+
+    progress_bar = tqdm(total=len(X) - split, desc="Walk-forward prediction", ncols=120)
+
+    for i in range(len(X) - split):
+        position = split + i
+        X_train_step = X.iloc[:position]
+        y_train_step = y.iloc[:position]
+
+        pipeline.fit(X_train_step, y_train_step)
+
+        X_transformed = _transform_without_final(pipeline, X.iloc[:position + 1])
+        X_test_transformed_last = X_transformed.iloc[[-1]]
+
+        y_pred_list.append(pipeline[-1].predict(X_test_transformed_last)[0])
+        y_test_list.append(y.iloc[position])
+
         progress_bar.update(1)
 
     progress_bar.close()
-    return y_pred
 
-def predict_at_position(X_all: DataFrame, y_all: DataFrame, pipeline, position: int) -> float:
-    X_train_step = X_all.iloc[:position]
-    y_train_step = y_all.iloc[:position]
-
-    pipeline.fit(X_train_step, y_train_step)
-
-    return pipeline.predict(X_all.iloc[[position]])[0]
-
-
-def create_train_test_split(X: DataFrame, y: Series, train_test_split: float):
-    split = int(len(y) * train_test_split)
-    X_train = X[:split]
-    X_test = X[split:]
-
-    y_train = y[:split]
-    y_test = y[split:]
-    return X_test, X_train, y_test, y_train
-
+    index = X.index[split:]
+    return (
+        X_test_transformed_last,
+        pd.Series(y_pred_list, index=index),
+        pd.Series(y_test_list, index=index),
+    )
 
 def plot_prediction(df, model_name:str, x_label:str = 'Date', y_label:str = 'PM10 [µg/m³]'):
     plt.figure(figsize=(24,10))
