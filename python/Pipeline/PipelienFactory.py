@@ -2,7 +2,7 @@
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LinearRegression
 
-from Pipeline.Decomposer.MSTLDecomposer import MSTLDecomposer
+from Pipeline.Decomposer.MSTLDecomposer import MSTLDecomposer, ResidualOptions
 from Pipeline.Transformers.ColumnFunctionTransformer import ColumnFunctionTransformer
 from Pipeline.Transformers.DropHeadNaN import DropHeadNaN
 from Pipeline.Transformers.TemporalFeatureBuilder import TemporalFeatureBuilder
@@ -45,9 +45,7 @@ class PipelineFactory:
 
         pipeline = Pipeline([
             ("log1p_transform_PM10", ColumnFunctionTransformer(["PM10"])),
-            ("mstl_decomposition", MSTLDecomposer(column_name="PM10", seasonal_periods=params["seasonal_periods"],
-                                                  trend_model=params["trend_model"],
-                                                  overwrite_column_with_residuals=False)),
+            ("mstl_decomposition", MSTLDecomposer(column_name="PM10", seasonal_periods=params["seasonal_periods"], trend_model=params["trend_model"], residual_options=ResidualOptions.NEW_FEATURE)),
             ("temporal_feature_builder", TemporalFeatureBuilder(["PM10"], lags=params["pm10_lags"], rolling_windows=params["pm10_rolling_windows"],)),
             ("residual_temporal_feature_builder", TemporalFeatureBuilder(["PM10_residuals"], lags=params["residual_lags"], rolling_windows=params["residual_rolling_windows"])),
             ("drop_PM_10", FeatureDropTransformer(["PM10_residuals", "PM10"])),

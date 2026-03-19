@@ -3,65 +3,19 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.seasonal import MSTL, DecomposeResult
 
+from enum import Enum
+
+class ResidualOptions(Enum):
+    IGNORE = "ignore"
+    OVERWRITE_ORIGINAL_FEATURE = "overwrite_original_feature"
+    NEW_FEATURE = "new_feature"
 
 class MSTLDecomposer(BaseEstimator, RegressorMixin):
-    """
-        Regression model based on MSTL decomposition.
-
-        The model decomposes the target time series into trend, seasonal,
-        and residual components using Multiple Seasonal-Trend decomposition
-        using LOESS (MSTL). Each component is then handled separately:
-
-        - The trend component is modeled using a user-provided regression model.
-        - Seasonal components are forecasted by repeating the last observed
-          seasonal patterns.
-        - Residuals are modeled using an optional external regression model
-          that can incorporate exogenous features.
-
-        The final prediction is obtained by summing the forecasts of the
-        trend, seasonal, and residual components.
-
-        Parameters
-        ----------
-        seasonal_periods : tuple of int, default=(24, 168)
-            Seasonal periods used for MSTL decomposition. Each value represents
-            the length of a seasonal cycle (e.g. 24 for daily seasonality in
-            hourly data).
-
-        trend_model : estimator
-            Regression model used to forecast the trend component. Must
-            implement `fit(X, y)` and `predict(X)`.
-
-        resid_model : estimator, optional
-            Regression model used to predict the residual component using
-            exogenous features. Must implement `fit(X, y)` and `predict(X)`.
-            If None, residuals are assumed to be zero during forecasting.
-
-        Attributes
-        ----------
-        mstl_ : MSTL
-            Fitted MSTL decomposition object.
-
-        decomp_ : DecomposeResult
-            Result of the MSTL decomposition containing trend, seasonal, and residual components.
-
-        trend_model_ : estimator
-            Fitted clone of the provided trend model.
-
-        resid_model_ : estimator or None
-            Fitted clone of the residual model if provided.
-
-        seasonal_patterns_ : dict
-            Dictionary containing the last observed seasonal pattern for each seasonal period.
-
-        trend_index_ : int
-            Index position of the last observed trend value used to generate future trend forecasts.
-        """
-    def __init__(self, column_name, seasonal_periods=None, trend_model=None, overwrite_column_with_residuals = False):
+    def __init__(self, column_name, seasonal_periods=None, trend_model=None, residual_options:ResidualOptions = ResidualOptions.IGNORE):
         self.seasonal_periods = seasonal_periods
         self.trend_model = trend_model
         self.column_name = column_name
-        self.overwrite_column_with_residuals = overwrite_column_with_residuals
+        self.residual_options = residual_options
 
         self.decomp_ = None
 
@@ -95,9 +49,9 @@ class MSTLDecomposer(BaseEstimator, RegressorMixin):
 
         residuals = X[self.column_name] - trend_feature - seasonal_features.values.sum(axis=1)
 
-        if self.overwrite_column_with_residuals:
+        if self.residual_options == ResidualOptions.OVERWRITE_ORIGINAL_FEATURE:
             X[self.column_name] = residuals
-        else:
+        elif self.residual_options == ResidualOptions.NEW_FEATURE:
             X[f"{self.column_name}_residuals"] = residuals
 
         return X
