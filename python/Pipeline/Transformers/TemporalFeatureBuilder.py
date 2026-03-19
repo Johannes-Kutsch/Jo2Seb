@@ -1,12 +1,13 @@
 ﻿from sklearn.base import BaseEstimator, TransformerMixin
 
 class TemporalFeatureBuilder(BaseEstimator, TransformerMixin):
-    def __init__(self, column_names, lags=None, rolling_windows=None, roll_shift = 1, drop_original=False):
+    def __init__(self, column_names, lags=None, rolling_windows=None, roll_shift = 1, drop_original=False, create_roll_std=False):
         self.lags = lags
         self.rolling_windows = rolling_windows
         self.column_names = column_names
         self.drop_original = drop_original
         self.roll_shift = roll_shift
+        self.create_roll_std = create_roll_std
 
     def fit(self, X, y=None):
         return self
@@ -22,7 +23,9 @@ class TemporalFeatureBuilder(BaseEstimator, TransformerMixin):
             if self.rolling_windows:
                 for window in self.rolling_windows:
                     X[f"{column_name}_roll_mean_{window}"] = X[column_name].shift(self.roll_shift).rolling(window).mean()
-                    X[f"{column_name}_roll_std_{window}"] = X[column_name].shift(self.roll_shift).rolling(window).std()
+
+                    if self.create_roll_std:
+                        X[f"{column_name}_roll_std_{window}"] = X[column_name].shift(self.roll_shift).rolling(window).std()
 
         if self.drop_original:
             X.drop(columns=self.column_names, inplace=True)

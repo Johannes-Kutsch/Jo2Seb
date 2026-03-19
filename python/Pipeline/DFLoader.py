@@ -9,7 +9,8 @@ class DFLoader:
     @staticmethod
     def load_combined_df() -> pd.DataFrame:
         pm10_df = DFLoader.load_pm10_df()
-        df_combined = pd.concat([pm10_df], axis=1)
+        weather_df = DFLoader.load_weather_df()
+        df_combined = pd.concat([pm10_df, weather_df], axis=1)
         return df_combined
 
     @staticmethod
@@ -20,7 +21,7 @@ class DFLoader:
     @staticmethod
     def load_pm10_df() -> pd.DataFrame:
         df = pd.read_csv(FilePaths.UWB_DATA / "Station_857_2018-01-01--2025-12-31.csv", index_col=0)
-        df.index = pd.to_datetime(df.index)
+        df.index = pd.to_datetime(df.index).tz_localize(None)
         components_meta = pd.read_csv(FilePaths.UWB_METADATA / "UWB_components_metadata.csv")
 
         components = ["1"]
@@ -40,6 +41,12 @@ class DFLoader:
         transformed = component_pipe.fit_transform(df)
 
         return pd.DataFrame(transformed, columns=component_columns, index=df.index)
+
+    @staticmethod
+    def load_weather_df() -> pd.DataFrame:
+        df = pd.read_csv(FilePaths.DWD_PROCESSED_DATA / "Weather_hourly_cleaned-Fuhlsbüttel.csv", index_col=0)
+        df.index = pd.to_datetime(df.index).tz_localize(None)
+        return df
 
     @staticmethod
     def _get_component_metadata(component_id: int, components_meta: pd.DataFrame):

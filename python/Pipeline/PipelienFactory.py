@@ -33,41 +33,56 @@ class PipelineFactory:
 
     @staticmethod
     def create_pm_pipeline(params: dict = None):
-        if params is None:
-            params = {
-                "seasonal_periods": [7, 365],
-                "trend_model": LinearRegression(),
-                "pm10_lags": [1, 2, 3, 4, 7, 8, 14, 15, 21, 22, 28, 29],
-                "pm10_rolling_windows": [2, 3, 4],
-                "residual_lags": [1, 7, 8, 14, 15, 21, 22, 28, 29],
-                "residual_rolling_windows": [2, 3, 4],
-            }
+        default_params = {
+            "seasonal_periods": [7, 365],
+            "trend_model": LinearRegression(),
+            "pm10_lags": [1, 7, 8, 14, 15, 21, 22, 28, 29],
+            "pm10_rolling_windows": [2, 3, 4],
+            # "residual_lags": [1, 7, 8, 14, 15, 21, 22, 28, 29],
+            # "residual_rolling_windows": [2, 3, 4],
+        }
+
+        params = PipelineFactory._aggregate_params(params, default_params)
 
         pipeline = Pipeline([
             ("log1p_transform_PM10", ColumnFunctionTransformer(["PM10"])),
             ("mstl_decomposition", MSTLDecomposer(column_name="PM10", seasonal_periods=params["seasonal_periods"], trend_model=params["trend_model"], residual_options=ResidualOptions.NEW_FEATURE)),
-            ("temporal_feature_builder", TemporalFeatureBuilder(["PM10"], lags=params["pm10_lags"], rolling_windows=params["pm10_rolling_windows"],)),
-            ("residual_temporal_feature_builder", TemporalFeatureBuilder(["PM10_residuals"], lags=params["residual_lags"], rolling_windows=params["residual_rolling_windows"])),
+            ("temporal_feature_builder", TemporalFeatureBuilder(["PM10"], lags=params["pm10_lags"], rolling_windows=params["pm10_rolling_windows"])),
+            #("residual_temporal_feature_builder", TemporalFeatureBuilder(["PM10_residuals"], lags=params["residual_lags"], rolling_windows=params["residual_rolling_windows"])),
             ("drop_PM_10", FeatureDropTransformer(["PM10_residuals", "PM10"])),
         ])
 
 
         return pipeline, params
-    
-    @staticmethod
 
+
+
+    @staticmethod
     def create_windpipe(params: dict = None):
-        if params is None:
-            params = {
-                "seasonal_periods": [365],
-                "trend_model": LinearRegression(),
-                "lags": [1, 2],
-                "rolling_windows": [2, 3, 4],
-            }
-        
+        default_params = {
+            "seasonal_periods": [365],
+            "trend_model": LinearRegression(),
+            "lags": [1, 2],
+            "rolling_windows": [2, 3, 4],
+        }
+
+        params = PipelineFactory._aggregate_params(params, default_params)
+
         pipeline = Pipeline([
             #("mstl_decomposer", MSTLDecomposer(column_name='sunshine', seasonal_periods=params["seasonal_periods"], trend_model= params["trend_model"])),
             ("temporal_features", TemporalFeatureBuilder(['w_x', 'w_y', 'wg_x', 'wg_y'], lags=params["lags"], rolling_windows=params["rolling_windows"],  drop_original=True)),
         ])
 
         return pipeline, params
+
+    @staticmethod
+    def _aggregate_params(params: dict | None, default_params: dict) -> dict:
+        if params is None:
+            params = {}
+
+
+
+        for key, value in default_params.items():
+            if key not in params:
+                params[key] = value
+        return params
