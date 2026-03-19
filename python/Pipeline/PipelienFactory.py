@@ -63,7 +63,7 @@ class PipelineFactory:
             params = {
                 "seasonal_periods": [365],
                 "trend_model": LinearRegression(),
-                "lags": [1, 2, 3, 4, 7, 8, 14, 15, 21, 22, 28, 29],
+                "lags": [1, 2],
                 "rolling_windows": [2, 3, 4],
             }
         
