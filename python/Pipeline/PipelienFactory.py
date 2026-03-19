@@ -10,6 +10,16 @@ from Pipeline.Transformers.TemporalFeatureBuilder import TemporalFeatureBuilder
 
 class PipelineFactory:
     @staticmethod
+    def create_main_pipeline(pm10_params = None):
+        pm10_pipeline, _ = PipelineFactory.create_pm_pipeline(pm10_params)
+
+        main_pipeline = Pipeline([
+            "pm10_pipeline", pm10_pipeline
+        ])
+
+        return main_pipeline
+
+    @staticmethod
     def create_pm_pipeline(params: dict = None):
         if params is None:
             params = {
