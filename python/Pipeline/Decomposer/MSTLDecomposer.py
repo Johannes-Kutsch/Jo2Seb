@@ -129,15 +129,17 @@ class MSTLDecomposer(BaseEstimator, RegressorMixin):
     @staticmethod
     def _create_seasonal_patterns(seasonal, seasonal_periods):
         seasonal_patterns = {}
-        for i, p in enumerate(seasonal_periods):
-
-            if hasattr(seasonal, "iloc"):
+        if isinstance(seasonal, pd.DataFrame):
+            for i, p in enumerate(seasonal_periods):
                 col = seasonal.columns[i]
                 pattern = seasonal[col].iloc[-p:].values
-            else:
-                pattern = seasonal.iloc[-p:].values
-
+                seasonal_patterns[p] = pattern
+        elif isinstance(seasonal, pd.Series):
+            p = seasonal_periods[0]
+            pattern = seasonal.iloc[-p:].values
             seasonal_patterns[p] = pattern
+        else:
+            raise TypeError("Unexpected type for seasonal")
 
         return seasonal_patterns
 
