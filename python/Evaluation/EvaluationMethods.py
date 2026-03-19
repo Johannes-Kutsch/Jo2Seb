@@ -8,7 +8,7 @@ from pandas import DataFrame, Series
 from sklearn.pipeline import Pipeline
 from typing import Optional, Any
 
-from MLFlow.Utils import log_metrics, start_local_experiment
+from EvaluationMethods.Utils import log_metrics, start_local_experiment
 
 
 def evaluate_timeseries_pipeline(X:DataFrame, y:Series, pipeline:Pipeline, experiment:str, train_test_split:float = 0.8, model_name:str = "", params:Optional[dict[str, Any]] = None, walk_forward:bool = False):
