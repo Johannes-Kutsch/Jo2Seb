@@ -14,7 +14,8 @@ class PipelineFactory:
         pm10_pipeline, _ = PipelineFactory.create_pm_pipeline(pm10_params)
 
         main_pipeline = Pipeline([
-            "pm10_pipeline", pm10_pipeline
+            ("pm10_pipeline", pm10_pipeline),
+            ("drop_head_nan", DropHeadNaN())
         ])
 
         return main_pipeline
@@ -39,7 +40,6 @@ class PipelineFactory:
             ("temporal_feature_builder", TemporalFeatureBuilder("PM10", lags=params["pm10_lags"], rolling_windows=params["pm10_rolling_windows"],)),
             ("residual_temporal_feature_builder", TemporalFeatureBuilder("PM10_residuals", lags=params["residual_lags"], rolling_windows=params["residual_rolling_windows"])),
             ("drop_PM_10", FeatureDropTransformer(["PM10_residuals", "PM10"])),
-            ("drop_head_nan", DropHeadNaN())
         ])
 
         return pipeline, params
