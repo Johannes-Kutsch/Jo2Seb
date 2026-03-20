@@ -14,7 +14,7 @@ class ProphetDecomposer(BaseEstimator, RegressorMixin):
 
         self.model_ = None
         self.seasonal_columns_ = None
-        self.component_columns_ = None
+        self.seasonal_trend_columns = None
 
     def fit(self, X, y=None):
         df = self._to_prophet_df(X)
@@ -28,15 +28,15 @@ class ProphetDecomposer(BaseEstimator, RegressorMixin):
         self.seasonal_columns_ = self._get_seasonal_columns(forecast)
 
         # Track all component column names that will be written to X in transform
-        self.component_columns_ = (
+        self.seasonal_trend_columns = (
             [f"{self.column_name}_trend"] +
             [f"{self.column_name}_{col}" for col in self.seasonal_columns_]
         )
 
         return self
 
-    def get_component_columns(self) -> list[str]:
-        return self.component_columns_
+    def get_seasonal_trend_columns(self) -> list[str]:
+        return self.seasonal_trend_columns
 
     def transform(self, X):
         X = X.copy()

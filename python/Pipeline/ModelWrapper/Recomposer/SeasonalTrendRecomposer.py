@@ -12,7 +12,7 @@ class SeasonalTrendRecomposer(BaseEstimator, RegressorMixin):
 
     def fit(self, X, y=None):
         if self.decomposer is not None:
-            self.component_columns_ = self.decomposer.get_component_columns()
+            self.component_columns_ = self.decomposer.get_seasonal_trend_columns()
         elif self.component_columns is not None:
             self.component_columns_ = self.component_columns
         else:

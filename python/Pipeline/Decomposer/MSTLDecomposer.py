@@ -19,6 +19,7 @@ class MSTLDecomposer(BaseEstimator, RegressorMixin):
 
         self.seasonal_patterns_ = None
         self.trend_index_ = None
+        self.seasonal_trend_columns = None
 
 
     def fit(self, X, y=None):
@@ -29,7 +30,18 @@ class MSTLDecomposer(BaseEstimator, RegressorMixin):
         self.seasonal_patterns_ = self._create_seasonal_patterns(self.decomp_.seasonal, self.seasonal_periods)
         self.trend_model_, self.trend_index_ = self._create_fitted_trend_model(self.decomp_.trend, self.trend_model)
 
+        self.seasonal_trend_columns = (
+            [f"{self.column_name}_trend"] +
+            [f"{self.column_name}_{col}" for col in self._get_seasonal_column_names()]
+        )
+
         return self
+
+    def get_seasonal_trend_columns(self) -> list[str]:
+        return self.seasonal_trend_columns
+
+    def _get_seasonal_column_names(self) -> list[str]:
+        return [f"seasonal_{p}" for p in self.seasonal_patterns_.keys()]
 
     def transform(self, X):
         X = X.copy()
