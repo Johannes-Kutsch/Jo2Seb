@@ -1,5 +1,6 @@
 ﻿from ruhken_utils import FeatureDropTransformer
 from sklearn.base import RegressorMixin
+from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LinearRegression
 
@@ -8,6 +9,7 @@ from Pipeline.Decomposer.DecomposerOption import DecomposerOption
 from Pipeline.ModelWrapper.AlignedYWrapper import AlignedYWrapper
 from Pipeline.ModelWrapper.Recomposer.SeasonalTrendRecomposer import SeasonalTrendRecomposer
 from Pipeline.Transformers.ColumnFunctionTransformer import ColumnFunctionTransformer
+from Pipeline.Transformers.ColumnImputer import ColumnImputer
 from Pipeline.Transformers.DropHeadNaN import DropHeadNaN
 from Pipeline.Transformers.TemporalFeatureBuilder import TemporalFeatureBuilder
 from Pipeline.ModelWrapper.Recomposer.RecomposerOption import RecomposerOption
@@ -24,8 +26,8 @@ class PipelineFactory:
             ("pm10_pipeline", pm10_pipeline),
 
             ## Weather
-            #("wind_pipe", wind_pipeline),
-            ("drop_unused_weather_features", FeatureDropTransformer(['w_x', 'w_y', 'wg_x', 'wg_y', 'precipitation', 'pressure_msl', 'sunshine', 'temperature',
+            ("wind_pipe", wind_pipeline),
+            ("drop_unused_weather_features", FeatureDropTransformer(['precipitation', 'pressure_msl', 'sunshine', 'temperature',
             'cloud_cover', 'dew_point', 'relative_humidity', 'visibility', 'solar']) ),
 
             ## Put as last pipeline
@@ -78,7 +80,7 @@ class PipelineFactory:
         params = PipelineFactory._aggregate_params(params, default_params)
 
         pipeline = Pipeline([
-            #("mstl_decomposer", MSTLDecomposer(column_name='sunshine', seasonal_periods=params["seasonal_periods"], trend_model= params["trend_model"])),
+            ("impute_wind", ColumnImputer(columns=["w_x", "w_y", "wg_x", "wg_y"], imputer=SimpleImputer(strategy="median"))),
             ("temporal_features", TemporalFeatureBuilder(['w_x', 'w_y', 'wg_x', 'wg_y'], lags=params["lags"], rolling_windows=params["rolling_windows"],  drop_original=True)),
         ])
 
