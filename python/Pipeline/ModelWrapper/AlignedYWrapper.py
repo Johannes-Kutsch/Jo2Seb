@@ -1,7 +1,7 @@
 ﻿from sklearn.base import BaseEstimator, RegressorMixin, clone
 
 
-class AlignedModelWrapper(BaseEstimator, RegressorMixin):
+class AlignedYWrapper(BaseEstimator, RegressorMixin):
     def __init__(self, model: RegressorMixin):
         self.model = model
         self.model_ = None

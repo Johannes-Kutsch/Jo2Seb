@@ -1,7 +1,7 @@
 ﻿from sklearn.base import BaseEstimator, RegressorMixin, clone
 
 
-class AlignedResidualWrapper(BaseEstimator, RegressorMixin):
+class SeasonalTrendRecomposer(BaseEstimator, RegressorMixin):
     def __init__(self, model: RegressorMixin, decomposer = None, component_columns: list[str] = None):
         self.model = model
         self.decomposer = decomposer

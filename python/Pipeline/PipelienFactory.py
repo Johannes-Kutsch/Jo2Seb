@@ -3,14 +3,14 @@ from sklearn.base import RegressorMixin
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LinearRegression
 
-from Pipeline.Wrapper.AlignedModelWrapper import AlignedModelWrapper
-from Pipeline.Wrapper.AlignedResidualWrapper import AlignedResidualWrapper
+from Pipeline.ModelWrapper.AlignedYWrapper import AlignedYWrapper
+from Pipeline.ModelWrapper.Recomposer.SeasonalTrendRecomposer import SeasonalTrendRecomposer
 from Pipeline.Decomposer.MSTLDecomposer import MSTLDecomposer, ResidualOption
 from Pipeline.Decomposer.ProphetDecomposer import ProphetDecomposer
 from Pipeline.Transformers.ColumnFunctionTransformer import ColumnFunctionTransformer
 from Pipeline.Transformers.DropHeadNaN import DropHeadNaN
 from Pipeline.Transformers.TemporalFeatureBuilder import TemporalFeatureBuilder
-from Pipeline.Wrapper.WrapperOption import WrapperOption
+from Pipeline.ModelWrapper.Recomposer.RecomposerOption import RecomposerOption
 
 
 class PipelineFactory:
@@ -35,7 +35,7 @@ class PipelineFactory:
         return main_pipeline, pm10_params, wind_params
 
     @staticmethod
-    def create_model_pipeline(model: RegressorMixin, wrapper_option: WrapperOption = WrapperOption.DEFAULT, pm10_params = None, wind_params = None):
+    def create_model_pipeline(model: RegressorMixin, wrapper_option: RecomposerOption = RecomposerOption.IGNORE, pm10_params = None, wind_params = None):
         main_pipeline, pm10_params, wind_params = PipelineFactory.create_main_pipeline(pm10_params ,wind_params)
 
         model_pipeline = Pipeline([
@@ -105,14 +105,14 @@ class PipelineFactory:
         return pipeline, params
 
     @staticmethod
-    def _create_model_pipeline(model: RegressorMixin, wrapper_option: WrapperOption, pm10_params: dict):
-        if wrapper_option == WrapperOption.DEFAULT:
-            return AlignedModelWrapper(model=model)
+    def _create_model_pipeline(model: RegressorMixin, wrapper_option: RecomposerOption, pm10_params: dict):
+        if wrapper_option == RecomposerOption.IGNORE:
+            return AlignedYWrapper(model=model)
 
-        elif wrapper_option == WrapperOption.RESIDUAL_COMPOSER:
-            return AlignedResidualWrapper(model=model, decomposer=pm10_params["decomposer"])
+        elif wrapper_option == RecomposerOption.SEASONAL_TREND:
+            return SeasonalTrendRecomposer(model=model, decomposer=pm10_params["decomposer"])
 
-        raise ValueError(f"Unsupported wrapper_option: {wrapper_option}. Must be one of {list(WrapperOption)}")
+        raise ValueError(f"Unsupported wrapper_option: {wrapper_option}. Must be one of {list(RecomposerOption)}")
 
     @staticmethod
     def _aggregate_params(params: dict | None, default_params: dict) -> dict:
