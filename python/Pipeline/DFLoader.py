@@ -49,6 +49,12 @@ class DFLoader:
         return df
 
     @staticmethod
+    def load_copernicus_df(size = "small") -> pd.DataFrame:
+        df = pd.read_csv(FilePaths.COPERNICUS / f"Sentinel-5P NO2-NO2_{size}-area.csv", index_col=0)
+        df.index = pd.to_datetime(df.index, format="%m-%d-%y").tz_localize(None)
+        return df
+
+    @staticmethod
     def _get_component_metadata(component_id: int, components_meta: pd.DataFrame):
         return components_meta.loc[components_meta["component_id"] == component_id].squeeze()
 
