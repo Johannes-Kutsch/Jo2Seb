@@ -7,20 +7,25 @@ from Utils import FilePaths
 
 class DFLoader:
     @staticmethod
-    def load_combined_df() -> pd.DataFrame:
-        pm10_df = DFLoader.load_pm10_df()
+    def load_combined_df(station_numer = None) -> pd.DataFrame:
+        pm10_df = DFLoader.load_pm10_df(station_numer)
         weather_df = DFLoader.load_weather_df()
-        df_combined = pd.concat([pm10_df, weather_df], axis=1)
+        no2_df = DFLoader.load_copernicus_df("NO2")
+        no2_df = no2_df.reindex(pm10_df.index)
+        df_combined = pd.concat([pm10_df, weather_df, no2_df], axis=1)
         return df_combined
 
     @staticmethod
-    def load_daily_df() -> pd.DataFrame:
-        combined_df = DFLoader.load_combined_df()
+    def load_daily_df(station_numer = None) -> pd.DataFrame:
+        combined_df = DFLoader.load_combined_df(station_numer)
         return combined_df.resample("D").mean()
 
     @staticmethod
-    def load_pm10_df() -> pd.DataFrame:
-        df = pd.read_csv(FilePaths.UWB_DATA / "Station_857_2018-01-01--2025-12-31.csv", index_col=0)
+    def load_pm10_df(station_numer = None) -> pd.DataFrame:
+        if not station_numer:
+            station_numer = "857"
+
+        df = pd.read_csv(FilePaths.UWB_DATA / f"Station_{station_numer}_2018-01-01--2025-12-31.csv", index_col=0)
         df.index = pd.to_datetime(df.index).tz_localize(None)
         components_meta = pd.read_csv(FilePaths.UWB_METADATA / "UWB_components_metadata.csv")
 
@@ -49,8 +54,8 @@ class DFLoader:
         return df
 
     @staticmethod
-    def load_copernicus_df(size = "small") -> pd.DataFrame:
-        df = pd.read_csv(FilePaths.COPERNICUS / f"Sentinel-5P NO2-NO2_{size}-area.csv", index_col=0)
+    def load_copernicus_df(component="NO2", size = "small") -> pd.DataFrame:
+        df = pd.read_csv(FilePaths.COPERNICUS / f"Sentinel-5P {component}-{component}_{size}-area.csv", index_col=0)
         df.index = pd.to_datetime(df.index, format="%m-%d-%y").tz_localize(None)
         return df
 
