@@ -7,6 +7,7 @@ from mlflow.models import infer_signature
 from pandas import DataFrame, Series
 from sklearn.pipeline import Pipeline
 from typing import Optional, Any
+import matplotlib.dates as mdates
 
 from Evaluation.Utils import log_metrics, start_local_experiment
 
@@ -124,12 +125,36 @@ def _walk_forward_predict(X: DataFrame, y: Series, pipeline: Pipeline, train_tes
         pd.Series(y_test_list, index=index),
     )
 
-def plot_prediction(df, model_name:str, x_label:str = 'Date', y_label:str = 'PM10 [µg/m³]'):
-    plt.figure(figsize=(24,10))
-    plt.plot(df.index, df['y_test'], label='original', color='black', lw=2)
-    plt.plot(df.index, df['y_pred'], label='predicted', color='red')
-    plt.xlabel(f"\n{x_label}", fontsize=20, fontweight="bold")
-    plt.ylabel(f"{y_label}\n", fontsize=20, fontweight="bold")
-    plt.title(f"\n{model_name} {y_label} Prediction vs Original\n", fontsize=24, fontweight="bold")
-    plt.legend(fontsize=20)
+def plot_prediction(df, model_name: str, x_label: str | None = 'Date', y_label: str | None = 'PM10 [µg/m³]', bg_color ='#262626', text_color ='#ffffff', original_color ="#d4d4d4", pred_color ='#ff4d4d', labelpad = 15,
+                    title_font_size = 30, font_size = 20, legend_font_size = 20, figsize = (24, 10), ax_lw = 2, lw = 2, x_tick_interval = 3, legend = True, pred_label = "predicted", orig_label = "original"):
+    fig, ax = plt.subplots(figsize=figsize)
+    fig.patch.set_facecolor(bg_color)
+    ax.set_facecolor(bg_color)
+
+    ax.plot(df.index, df['y_test'], label=orig_label, color=original_color, lw = lw)
+    ax.plot(df.index, df['y_pred'], label=pred_label, color=pred_color, lw = lw)
+
+    if x_label is not None:
+        ax.set_xlabel(f"{x_label}", fontsize=font_size, fontweight="bold", color=text_color, labelpad=labelpad)
+    if y_label is not None:
+        ax.set_ylabel(f"{y_label}", fontsize=font_size, fontweight="bold", color=text_color, labelpad=labelpad)
+    #ax.set_title(f"{model_name}\n", fontsize=title_font_size, fontweight="bold", color=text_color)
+
+    ax.tick_params(axis='both', labelsize=font_size, labelcolor=text_color, color = text_color, width=ax_lw)
+
+    ax.grid(False)
+
+    for side in ['bottom', 'left']:
+        ax.spines[side].set_linewidth(ax_lw)
+        ax.spines[side].set_color(text_color)
+
+    for side in ['top', 'right']:
+        ax.spines[side].set_visible(False)
+
+    if legend:
+        ax.legend(fontsize=legend_font_size, labelcolor=text_color, facecolor=bg_color, edgecolor=text_color)
+
+    ax.xaxis.set_major_locator(mdates.MonthLocator(interval=x_tick_interval))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+
     plt.show()
