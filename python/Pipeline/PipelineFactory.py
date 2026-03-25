@@ -12,6 +12,7 @@ from Pipeline.ModelWrapper.Recomposer.SeasonalTrendRecomposer import SeasonalTre
 from Pipeline.Scalers.ColumnScaler import ColumnScaler
 from Pipeline.Transformers.ColumnFunctionTransformer import ColumnFunctionTransformer
 from Pipeline.Imputers.ColumnImputer import ColumnImputer
+from Pipeline.Transformers.DatetimeDummyExtractor import DatetimeDummyExtractor
 from Pipeline.Transformers.DropHeadNaN import DropHeadNaN
 from Pipeline.Transformers.TemporalFeatureBuilder import TemporalFeatureBuilder
 from Pipeline.ModelWrapper.Recomposer.RecomposerOption import RecomposerOption
@@ -23,10 +24,14 @@ class PipelineFactory:
         pm10_pipeline, pm10_params = PipelineFactory.create_pm10_pipeline(pm10_params, decomposer_option)
         weather_pipe = PipelineFactory.create_weather_pipe()
         no2_pipe = PipelineFactory.create_no2_pipe()
+        date_pipe = PipelineFactory.create_datetime_pipe()
 
         main_pipeline = Pipeline([
             ### Airpolution 
             ("pm10_pipeline", pm10_pipeline),
+
+            ### Datetime
+            # ("datetime_pipe", date_pipe),
 
             ## Weather
             ("weather_pipe", weather_pipe),
@@ -111,6 +116,15 @@ class PipelineFactory:
         ])
 
         return pipeline
+
+    @staticmethod
+    def create_datetime_pipe():
+        pipeline = Pipeline([
+            ("extract_datetime_feats", DatetimeDummyExtractor(['year', 'month', 'day', 'weekday', 'is_weekend']))
+        ])
+
+        return pipeline
+
 
     @staticmethod
     def _create_model_pipeline(model: RegressorMixin, wrapper_option: RecomposerOption, pm10_params: dict):
