@@ -1,6 +1,8 @@
 ## Project Description
 
-This is the first Capstone Project for the AI-Engineering Class mateflow-24.11.25 from neue fische.
+A team project focused on forecasting daily PM10 particulate matter levels at Hamburg Harbour. We combined air quality and weather data from public APIs (UBA, DWD, Copernicus) into a forecasting pipeline with experiment tracking via MLflow. Our best model significantly outperformed the baseline (R² 0.21 → 0.40).
+
+Presentation: https://docs.google.com/presentation/d/1do9ZqPXh45yNRQ26nqWb1ITjbVk9BWNX99ijikiTROc/edit?usp=sharing
 
 ## Set up your Environment
 
@@ -42,33 +44,6 @@ The added [requirements file](requirements.txt) contains all libraries and depen
     source .venv/Scripts/activate
     python -m pip install --upgrade pip
     pip install -r requirements.txt
-    ```
-
-## Save requirements
-
-- Activate the virtual environment and create a /update the requirements.txt
-
-### **`macOS`** type the following commands : 
-    ```BASH
-    source .venv/bin/activate
-    pip freeze > requirements.txt
-    ```
-
-### **`WindowsOS`** type the following commands :
-
-- Install the virtual environment and the required packages by following commands.
-
-   For `PowerShell` CLI :
-
-    ```PowerShell
-    .venv\Scripts\Activate.ps1
-    pip freeze > requirements.txt
-    ```
-
-    For `Git-Bash` CLI :
-    ```
-    source .venv/bin/activate
-    pip freeze > requirements.txt
     ```
 
 ## GIT LFS
