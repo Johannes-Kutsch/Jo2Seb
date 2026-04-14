@@ -2,7 +2,7 @@
 
 A team project focused on forecasting daily PM10 particulate matter levels at Hamburg Harbour. We combined air quality and weather data from public APIs (UBA, DWD, Copernicus) into a forecasting pipeline with experiment tracking via MLflow. Our best model significantly outperformed the baseline (R² 0.21 → 0.40).
 
-Presentation: https://docs.google.com/presentation/d/1do9ZqPXh45yNRQ26nqWb1ITjbVk9BWNX99ijikiTROc/edit?usp=sharing
+- [Presentation](https://docs.google.com/presentation/d/1do9ZqPXh45yNRQ26nqWb1ITjbVk9BWNX99ijikiTROc/edit?usp=sharing)
 
 ## Set up your Environment
 
